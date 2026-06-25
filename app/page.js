@@ -848,7 +848,7 @@ export default function Page() {
   const waSeries = (waAgg?.series || []).map((x) => ({ name: monthLabel(x.key).split(" ")[0], "Entrega": x.deliveryRate, "Leído": x.readRate }));
   const plan = useMemo(() => (sel ? buildPlan(sel, ads, gads, ga4, ig, fb, emailAgg) : []), [sel, ads, gads, ga4, ig, fb, emailAgg]);
   const improvements = useMemo(() => (sel ? buildImprovements(sel, ig, fb, ads, gads, ga4, li, emailAgg, comp) : []), [sel, ig, fb, ads, gads, ga4, li, emailAgg, comp]);
-  const liSeries = (li?.series || []).map((x) => ({ name: monthLabel(x.key).split(" ")[0], Impresiones: x.impressions || 0, Reacciones: x.reactions || 0 }));
+  const liSeries = (li?.series || []).map((x) => ({ name: monthLabel(x.key).split(" ")[0], Impresiones: x.impressions || 0, Reacciones: x.reactions || 0, Seguidores: x.followers ?? null }));
 
   // Series para gráficos de evolución (todos los meses, ascendente).
   const igSeries = (ig?.series || []).map((x) => ({ name: monthLabel(x.key).split(" ")[0], Alcance: x.reach, Interacciones: x.interactions }));
@@ -1050,12 +1050,12 @@ Actualizar a inicio de mes: <b>Competencia</b> (ER% de cada cuenta) en modo edic
                       <Line type="monotone" dataKey="Impresiones" stroke="#E52522" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ChartBox>
-                  <ChartBox title="Evolución de reacciones">
-                    <BarChart data={liSeries}>
+                  <ChartBox title="Evolución de seguidores">
+                    <LineChart data={liSeries}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e4e7ec" />
-                      <XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip {...tip} />
-                      <Bar dataKey="Reacciones" fill="#E52522" radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                      <XAxis dataKey="name" {...axis} /><YAxis {...axis} domain={["auto", "auto"]} /><Tooltip {...tip} />
+                      <Line type="monotone" dataKey="Seguidores" stroke="#7c3aed" strokeWidth={2} dot={false} connectNulls />
+                    </LineChart>
                   </ChartBox>
                 </div>
               )}
