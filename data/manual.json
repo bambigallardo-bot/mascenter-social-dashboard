@@ -1,0 +1,30 @@
+{
+  "_instrucciones": "MANUAL — el CM actualiza esto a inicio de mes. Competencia: ER% de cada cuenta con la fórmula (Likes + Comentarios) / Seguidores × 100 (rango esperado 1–5%); las cifras de la competencia son aproximadas porque no se tienen sus métricas exactas. LinkedIn (Grupo IFB) es automático por API; estos datos son el FALLBACK de ejemplo. Agrega la key del mes nuevo (ej. '2026-06') en cada bloque y haz commit/push (Vercel redeploya solo). Si falta el mes seleccionado, el dashboard muestra una alerta.",
+  "competencia": {
+    "2026-04": {
+      "MÁS CENTER": { "followers": 12446, "engagement": 1.16 },
+      "Malls Outlet Vivo": { "followers": null, "engagement": 0.40 },
+      "Espacio Urbano": { "followers": null, "engagement": 0.21 }
+    },
+    "2026-05": {
+      "MÁS CENTER": { "followers": 13296, "engagement": 3.36 },
+      "Malls Outlet Vivo": { "followers": null, "engagement": 0.42 },
+      "Espacio Urbano": { "followers": null, "engagement": 0.19 }
+    }
+  },
+  "linkedin": {
+    "profileUrl": "",
+    "followers": { "2026-04": 2700, "2026-05": 2805 },
+    "monthly": {
+      "2026-04": { "acquired": null, "impressions": 5517, "views": 121, "reactions": null, "engagement": null },
+      "2026-05": { "acquired": 105, "impressions": 28601, "views": 273, "reactions": 344, "engagement": 28.9 }
+    },
+    "best": {
+      "2026-05": [
+        { "label": "POST: PROYECTO SANTA CRUZ", "date": "mayo", "impressions": 12000, "reactions": 150, "clicks": 3000, "newFollowers": null },
+        { "label": "POST: NUEVOS PROYECTOS GRUPO IFB", "date": "mayo", "impressions": 8200, "reactions": 95, "clicks": 2100, "newFollowers": null },
+        { "label": "POST: CRECIMIENTO Y EXPANSIÓN", "date": "mayo", "impressions": 4100, "reactions": 60, "clicks": 1300, "newFollowers": null }
+      ]
+    }
+  }
+}
