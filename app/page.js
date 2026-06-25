@@ -936,7 +936,7 @@ export default function Page() {
         <div style={{ padding: "0 16px 16px", fontSize: 13.5, lineHeight: 1.5, color: "#374151" }}>
           <div style={{ marginBottom: 10 }}>
             <div style={{ color: "#16a34a", fontWeight: 600, marginBottom: 4 }}>✅ AUTOMÁTICO — no necesitas tocar</div>
-            KPIs del mes y comparativas vs. mes anterior · gráficos de tendencia · Instagram y Facebook orgánico · Meta Ads por objetivo (Tráfico/Formularios/Mensajes) y por sucursal · GA4 con fuentes de tráfico y páginas más vistas · LinkedIn de Grupo IFB (API) · conclusiones redactadas por canal · <b>Plan del próximo mes</b> con acciones priorizadas.
+            KPIs del mes y comparativas vs. mes anterior · gráficos de tendencia · Instagram orgánico · Meta Ads por objetivo (Tráfico/Formularios/Mensajes) y por sucursal · GA4 con fuentes de tráfico y páginas más vistas · LinkedIn de Grupo IFB · conclusiones redactadas por canal · <b>Plan del próximo mes</b> con acciones priorizadas.
           </div>
           <div>
             <div style={{ color: "#d97706", fontWeight: 600, marginBottom: 4 }}>⚠️ MANUAL — revisar antes de enviar al cliente</div>
@@ -1017,63 +1017,6 @@ Actualizar a inicio de mes: <b>Competencia</b> (ER% de cada cuenta) en modo edic
             <Conclusion id={`ig-${sel}`} text={igConclusion(sel, ig.cur, ig.prev, ig.followers)} />
           </>
         ) : !data?.errors?.instagram && <div style={{ color: "#6b7280", fontSize: 13 }}>Sin datos de Instagram para {monthLabel(sel)}.</div>}
-      </Section>
-
-      {/* FACEBOOK */}
-      <Section title="👍 Facebook / Meta (orgánico)">
-        {data?.errors?.facebook && <div style={{ color: "#b45309", fontSize: 13, marginBottom: 10 }}>Facebook: {data.errors.facebook}</div>}
-        {fb?.cur ? (
-          <>
-            <div style={grid(150)}>
-              <Card label="Seguidores" value={fmt(fb.followers)} accent="#7c3aed" change={delta(fb.followers, fb.fPrev)} />
-              <Card label="Nuevos seguidores" value={fmt(fb.cur.fanAdds)} change={delta(fb.cur.fanAdds, fb.prev?.fanAdds)} />
-              <Card label="Posts" value={fmt(fb.cur.posts)} change={delta(fb.cur.posts, fb.prev?.posts)} />
-              <Card label="Espectadores (alcance)" value={fmt(fb.cur.reach)} accent="#2563eb" change={delta(fb.cur.reach, fb.prev?.reach)} />
-              <Card label="Visualizaciones" value={fmt(fb.cur.impressions)} change={delta(fb.cur.impressions, fb.prev?.impressions)} />
-              <Card label="Interacciones" value={fmt(fb.cur.engagement)} change={delta(fb.cur.engagement, fb.prev?.engagement)} />
-              <Card label="Visitas al perfil" value={fmt(fb.cur.profileViews)} accent="#16a34a" change={delta(fb.cur.profileViews, fb.prev?.profileViews)} />
-            </div>
-            {fbSeries.length > 1 && (
-              <div style={{ ...grid(320), marginTop: 16 }}>
-                <ChartBox title="Evolución de visualizaciones">
-                  <LineChart data={fbSeries}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e4e7ec" />
-                    <XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip {...tip} /><Legend />
-                    <Line type="monotone" dataKey="Visualizaciones" stroke="#E52522" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ChartBox>
-                <ChartBox title="Evolución de interacciones">
-                  <BarChart data={fbSeries}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e4e7ec" />
-                    <XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip {...tip} />
-                    <Bar dataKey="Interacciones" fill="#E52522" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ChartBox>
-              </div>
-            )}
-            {fb.best?.length > 0 && (
-              <div style={{ marginTop: 24 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10 }}>🏆 Mejores publicaciones del mes (por alcance)</div>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={tableStyle}>
-                    <thead><tr><th style={th}>#</th><th style={th}>Publicación</th><th style={th}>Fecha</th><th style={th}>Alcance</th></tr></thead>
-                    <tbody>
-                      {fb.best.map((p, i) => (
-                        <tr key={p.id}>
-                          <td style={{ ...td, color: "#d97706", fontWeight: 700 }}>{i + 1}</td>
-                          <td style={td}><div style={{ display: "flex", alignItems: "center", gap: 10 }}><Thumb src={p.thumb} alt={p.message} /><a href={p.permalink} target="_blank" rel="noreferrer" style={{ color: "#374151" }}>{p.message || "(sin texto)"}</a></div></td>
-                          <td style={td}>{fmtDate(p.date)}</td>
-                          <td style={{ ...td, color: "#2563eb", fontWeight: 600 }}>{fmt(p.reach)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-            <Conclusion id={`fb-${sel}`} text={fbConclusion(sel, fb.cur, fb.prev, fb.followers)} />
-          </>
-        ) : !data?.errors?.facebook && <div style={{ color: "#6b7280", fontSize: 13 }}>Sin datos de Facebook para {monthLabel(sel)}.</div>}
       </Section>
 
       {/* LINKEDIN (API en vivo, o manual editado por el CM) */}
@@ -1378,7 +1321,7 @@ Actualizar a inicio de mes: <b>Competencia</b> (ER% de cada cuenta) en modo edic
       )}
 
       <footer style={{ marginTop: 50, color: "#9aa3af", fontSize: 12, textAlign: "center" }}>
-        Datos vía Meta Graph API (IG, FB, Meta Ads), GA4 y LinkedIn · Competencia (ER) manual · Más Center / Grupo IFB · Copywriters
+        Datos vía Meta Graph API (Instagram, Meta Ads), GA4 y LinkedIn · Competencia (ER) manual · Más Center / Grupo IFB · Copywriters
       </footer>
     </main>
    </EditCtx.Provider>
