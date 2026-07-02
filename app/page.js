@@ -970,7 +970,7 @@ Actualizar a inicio de mes: <b>Competencia</b> (ER% de cada cuenta) en modo edic
               <Card label="Alcance" value={fmt(ig.cur.reach)} accent="#2563eb" change={delta(ig.cur.reach, ig.prev?.reach)} />
               <Card label="Visualizaciones" value={fmt(ig.cur.views)} change={delta(ig.cur.views, ig.prev?.views)} />
               <Card label="Interacciones" value={fmt(ig.cur.interactions)} change={delta(ig.cur.interactions, ig.prev?.interactions)} />
-              <Card label="Clics a la web" value={fmt(ig.cur.webClicks)} accent="#16a34a" change={delta(ig.cur.webClicks, ig.prev?.webClicks)} />
+              <Card label="Visitas al perfil" value={fmt(ig.cur.profileViews)} accent="#16a34a" change={delta(ig.cur.profileViews, ig.prev?.profileViews)} />
               <Card label="Engagement" value={fmtPct(ig.cur.engagement)} change={delta(ig.cur.engagement, ig.prev?.engagement)} />
             </div>
             {igSeries.length > 1 && (
