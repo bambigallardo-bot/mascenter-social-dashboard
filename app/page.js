@@ -1099,7 +1099,7 @@ Actualizar a inicio de mes: <b>Competencia</b> (ER% de cada cuenta) en modo edic
           <>
             <div style={{ overflowX: "auto" }}>
               <table style={tableStyle}>
-                <thead><tr><th style={th}>Marca</th><th style={th}>Seguidores</th><th style={th}>ER% mes ant.</th><th style={th}>ER% {monthName(sel)}</th><th style={th}>Var.</th></tr></thead>
+                <thead><tr><th style={th}>Marca</th><th style={th}>Seguidores</th><th style={th}>ER% {monthName(sel)}</th></tr></thead>
                 <tbody>
                   {comp.rows.map((r) => {
                     const mine = r.brand.toUpperCase().includes(RED_NAME);
@@ -1107,11 +1107,7 @@ Actualizar a inicio de mes: <b>Competencia</b> (ER% de cada cuenta) en modo edic
                       <tr key={r.brand} style={mine ? { background: "rgba(229,37,34,0.10)" } : undefined}>
                         <td style={{ ...td, fontWeight: mine ? 700 : 400, color: mine ? BRAND : "#1a1a1a" }}>{r.brand}</td>
                         <td style={td}>{fmt(r.followers)}</td>
-                        <td style={td}>{r.erPrev == null ? "—" : fmtPct(r.erPrev)}</td>
                         <td style={{ ...td, fontWeight: 600 }}>{r.er == null ? "—" : fmtPct(r.er)}</td>
-                        <td style={{ ...td, color: r.erDelta == null ? "#6b7280" : r.erDelta >= 0 ? "#16a34a" : "#dc2626", fontWeight: 600 }}>
-                          {r.erDelta == null ? "—" : `${r.erDelta >= 0 ? "▲" : "▼"} ${Math.abs(r.erDelta).toLocaleString("es-CL")} pts`}
-                        </td>
                       </tr>
                     );
                   })}
