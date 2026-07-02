@@ -23,6 +23,16 @@ const BRAND_DARK = "#B01D1A";
 const COLORS = ["#E52522", "#2563eb", "#16a34a", "#7c3aed", "#d97706", "#0891b2", "#ea580c", "#64748b"];
 
 const fmt = (n) => (typeof n === "number" ? n.toLocaleString("es-CL") : n ?? "—");
+// Parser tolerante al formato chileno: "3,36" -> 3.36 · "13.572" -> 13572 · "12,5%" -> 12.5
+function parseNum(v) {
+  if (v == null) return null;
+  let s = String(v).trim().replace(/%/g, "").replace(/\s/g, "");
+  if (s === "") return null;
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", "."); // coma decimal, punto de miles
+  else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, ""); // puntos de miles: 13.572 -> 13572
+  const n = Number(s);
+  return isNaN(n) ? null : n;
+}
 const fmtPct = (n) => (typeof n === "number" ? `${n}%`.replace(".", ",") : "—");
 const fmtMoney = (n) => (typeof n === "number" ? `$${Math.round(n).toLocaleString("es-CL")}` : "—");
 const fmtDuration = (s) => {
@@ -479,7 +489,7 @@ function LinkedinEditor({ source, monthKey, onSave }) {
   const [saving, setSaving] = useState(false);
   const [ok, setOk] = useState(false);
   const inp = { background: "#f4f5f7", color: "#1a1a1a", border: "1px solid #e4e7ec", borderRadius: 6, padding: "6px 8px", fontSize: 13, width: "100%", boxSizing: "border-box" };
-  const num = (v) => (v !== "" && v != null && !isNaN(Number(v)) ? Number(v) : null);
+  const num = parseNum;
   const updM = (f, v) => setM((o) => ({ ...o, [f]: v }));
   const updB = (i, f, v) => setBest((rs) => rs.map((r, idx) => (idx === i ? { ...r, [f]: v } : r)));
   const save = async () => {
@@ -569,9 +579,9 @@ function CompetenciaEditor({ source, monthKey, prevMonthKey, onSave }) {
       const b = (r.brand || "").trim();
       if (!b) continue;
       const entry = {};
-      if (r.followers !== "" && r.followers != null && !isNaN(Number(r.followers))) entry.followers = Number(r.followers);
-      else entry.followers = null;
-      if (r.engagement !== "" && r.engagement != null && !isNaN(Number(r.engagement))) entry.engagement = Number(r.engagement);
+      entry.followers = parseNum(r.followers);
+      const er = parseNum(r.engagement);
+      if (er != null) entry.engagement = er;
       monthObj[b] = entry;
     }
     obj[monthKey] = monthObj;
