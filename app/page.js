@@ -475,6 +475,118 @@ function Thumb({ src, alt }) {
 }
 
 // ---------------- Editor de LinkedIn (modo edición — manual con gráficos) ----------------
+// ——— Editores manuales por sección (auto por API + corrección a mano por campo) ———
+const kpiInp = { background: "#f4f5f7", color: "#1a1a1a", border: "1px solid #e4e7ec", borderRadius: 6, padding: "6px 8px", fontSize: 13, width: "100%", boxSizing: "border-box" };
+function KpiField({ label, value, onChange }) {
+  return (
+    <label style={{ fontSize: 12, color: "#6b7280" }}>{label}
+      <input value={value} onChange={(e) => onChange(e.target.value)} style={{ ...kpiInp, marginTop: 4 }} inputMode="numeric" placeholder="—" />
+    </label>
+  );
+}
+// Editor genérico de KPIs por mes (override por campo; vacío = se mantiene el de la API).
+function KpiEditor({ title, note, fields, source, monthKey, seed, onSave, label }) {
+  const src = source || {};
+  const sm = (src.monthly || {})[monthKey] || {};
+  const sc = seed || {};
+  const init = {};
+  for (const f of fields) init[f.key] = (sm[f.key] != null && sm[f.key] !== "") ? sm[f.key] : (sc[f.key] ?? "");
+  const [m, setM] = useState(init);
+  const [saving, setSaving] = useState(false);
+  const [ok, setOk] = useState(false);
+  const upd = (k, v) => setM((o) => ({ ...o, [k]: v }));
+  const save = async () => {
+    setSaving(true); setOk(false);
+    const obj = { monthly: { ...(src.monthly || {}) } };
+    const row = {};
+    for (const f of fields) row[f.key] = parseNum(m[f.key]);
+    obj.monthly[monthKey] = row;
+    const r = await onSave(obj);
+    setSaving(false); setOk(r !== false);
+  };
+  return (
+    <div className="no-print" style={{ ...panel, marginBottom: 16, borderLeft: `3px solid ${BRAND}` }}>
+      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>✏️ {title} · {monthLabel(monthKey)} <span style={{ color: "#6b7280", fontWeight: 400 }}>{note}</span></div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10 }}>
+        {fields.map((f) => <KpiField key={f.key} label={f.label} value={m[f.key]} onChange={(v) => upd(f.key, v)} />)}
+      </div>
+      <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center" }}>
+        <button disabled={saving} onClick={save} style={{ ...miniBtn, background: BRAND, color: "#fff", border: "none" }}>{saving ? "Guardando…" : `Guardar ${label}`}</button>
+        {ok && <span style={{ color: "#16a34a", fontSize: 13 }}>✓ Guardado</span>}
+      </div>
+    </div>
+  );
+}
+// Editor de Instagram (KPIs + mejores posts) — precargado de la API.
+function InstagramEditor({ source, monthKey, seed, onSave }) {
+  const src = source || {};
+  const sm = (src.monthly || {})[monthKey] || {};
+  const sc = seed?.cur || {};
+  const val = (f) => (sm[f] != null && sm[f] !== "" ? sm[f] : (sc[f] ?? ""));
+  const seedBest = ((src.best || {})[monthKey] || (seed?.best || []).map((b) => ({ caption: b.caption || "", date: b.date || "", reach: b.reach ?? "", likes: b.likes ?? "", comments: b.comments ?? "", thumb: b.thumb || "" }))).map((b) => ({ ...b }));
+  while (seedBest.length < 3) seedBest.push({ caption: "", date: "", reach: "", likes: "", comments: "", thumb: "" });
+  const [followers, setFollowers] = useState((src.followers || {})[monthKey] ?? (seed?.followers ?? ""));
+  const [m, setM] = useState({
+    newFollowers: val("newFollowers"), reach: val("reach"), views: val("views"),
+    interactions: val("interactions"), profileViews: val("profileViews"), engagement: val("engagement"),
+  });
+  const [best, setBest] = useState(seedBest);
+  const [saving, setSaving] = useState(false);
+  const [ok, setOk] = useState(false);
+  const updM = (f, v) => setM((o) => ({ ...o, [f]: v }));
+  const updB = (i, f, v) => setBest((rs) => rs.map((r, idx) => (idx === i ? { ...r, [f]: v } : r)));
+  const save = async () => {
+    setSaving(true); setOk(false);
+    const obj = { followers: { ...(src.followers || {}) }, monthly: { ...(src.monthly || {}) }, best: { ...(src.best || {}) } };
+    if (parseNum(followers) != null) obj.followers[monthKey] = parseNum(followers); else delete obj.followers[monthKey];
+    obj.monthly[monthKey] = {
+      newFollowers: parseNum(m.newFollowers), reach: parseNum(m.reach), views: parseNum(m.views),
+      interactions: parseNum(m.interactions), profileViews: parseNum(m.profileViews), engagement: parseNum(m.engagement),
+    };
+    const cleanBest = best.filter((b) => (b.caption || "").trim())
+      .map((b) => ({ caption: b.caption.trim(), date: b.date || "", reach: parseNum(b.reach) ?? 0, likes: parseNum(b.likes) ?? 0, comments: parseNum(b.comments) ?? 0, thumb: (b.thumb || "").trim() || undefined }));
+    if (cleanBest.length) obj.best[monthKey] = cleanBest; else delete obj.best[monthKey];
+    const r = await onSave(obj);
+    setSaving(false); setOk(r !== false);
+  };
+  return (
+    <div className="no-print" style={{ ...panel, marginBottom: 16, borderLeft: `3px solid ${BRAND}` }}>
+      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>✏️ Editar Instagram · {monthLabel(monthKey)} <span style={{ color: "#6b7280", fontWeight: 400 }}>(precargado de la API; corrige solo lo que necesites, lo demás se mantiene)</span></div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10 }}>
+        <KpiField label="Seguidores (total)" value={followers} onChange={setFollowers} />
+        <KpiField label="Nuevos seguidores" value={m.newFollowers} onChange={(v) => updM("newFollowers", v)} />
+        <KpiField label="Alcance" value={m.reach} onChange={(v) => updM("reach", v)} />
+        <KpiField label="Visualizaciones" value={m.views} onChange={(v) => updM("views", v)} />
+        <KpiField label="Interacciones" value={m.interactions} onChange={(v) => updM("interactions", v)} />
+        <KpiField label="Visitas al perfil" value={m.profileViews} onChange={(v) => updM("profileViews", v)} />
+        <KpiField label="Engagement %" value={m.engagement} onChange={(v) => updM("engagement", v)} />
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 600, marginTop: 16, marginBottom: 8 }}>🏆 Mejores publicaciones (hasta 3)</div>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ ...tableStyle, background: "transparent" }}>
+          <thead><tr><th style={th}>Publicación</th><th style={th}>Fecha</th><th style={th}>Alcance</th><th style={th}>Likes</th><th style={th}>Coment.</th><th style={th}>Imagen (URL)</th></tr></thead>
+          <tbody>
+            {best.map((b, i) => (
+              <tr key={i}>
+                <td style={td}><input value={b.caption} onChange={(e) => updB(i, "caption", e.target.value)} style={kpiInp} placeholder="POST: …" /></td>
+                <td style={td}><input value={b.date} onChange={(e) => updB(i, "date", e.target.value)} style={{ ...kpiInp, width: 90 }} placeholder="5 mayo" /></td>
+                <td style={td}><input value={b.reach} onChange={(e) => updB(i, "reach", e.target.value)} style={{ ...kpiInp, width: 90 }} inputMode="numeric" /></td>
+                <td style={td}><input value={b.likes} onChange={(e) => updB(i, "likes", e.target.value)} style={{ ...kpiInp, width: 70 }} inputMode="numeric" /></td>
+                <td style={td}><input value={b.comments} onChange={(e) => updB(i, "comments", e.target.value)} style={{ ...kpiInp, width: 70 }} inputMode="numeric" /></td>
+                <td style={td}><input value={b.thumb} onChange={(e) => updB(i, "thumb", e.target.value)} style={{ ...kpiInp, minWidth: 160 }} placeholder="https://…" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center" }}>
+        <button disabled={saving} onClick={save} style={{ ...miniBtn, background: BRAND, color: "#fff", border: "none" }}>{saving ? "Guardando…" : "Guardar Instagram"}</button>
+        {ok && <span style={{ color: "#16a34a", fontSize: 13 }}>✓ Guardado</span>}
+      </div>
+    </div>
+  );
+}
+
 function LinkedinEditor({ source, monthKey, onSave }) {
   const src = source || {};
   const seedM = (src.monthly || {})[monthKey] || {};
@@ -623,7 +735,7 @@ export default function Page() {
   const [sel, setSel] = useState(null);
 
   // Modo edición + overrides compartidos (servidor).
-  const [server, setServer] = useState({ conclusions: {}, competencia: null, linkedin: null, kv: false });
+  const [server, setServer] = useState({ conclusions: {}, competencia: null, linkedin: null, instagram: null, ads: null, ga4: null, kv: false });
   const [editParam, setEditParam] = useState(false);
   const [editMode, setEditMode] = useState(false);
   // Pestañas principales del informe. Al exportar el PDF se muestran todas.
@@ -651,7 +763,7 @@ export default function Page() {
     try {
       const res = await fetch("/api/overrides", { cache: "no-store" });
       const j = await res.json();
-      setServer({ conclusions: j.conclusions || {}, competencia: j.competencia || null, linkedin: j.linkedin || null, kv: !!j.kv });
+      setServer({ conclusions: j.conclusions || {}, competencia: j.competencia || null, linkedin: j.linkedin || null, instagram: j.instagram || null, ads: j.ads || null, ga4: j.ga4 || null, kv: !!j.kv });
     } catch (_) {}
   }, []);
 
@@ -699,6 +811,24 @@ export default function Page() {
     const j = await res.json().catch(() => ({})); alert("No se pudo guardar: " + (j.error || res.status)); return false;
   }, [editPass]);
 
+  const saveInstagram = useCallback(async (obj) => {
+    const res = await fetch("/api/overrides", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: editPass, type: "instagram", value: obj }) });
+    if (res.ok) { setServer((s) => ({ ...s, instagram: obj })); return true; }
+    const j = await res.json().catch(() => ({})); alert("No se pudo guardar: " + (j.error || res.status)); return false;
+  }, [editPass]);
+
+  const saveAds = useCallback(async (obj) => {
+    const res = await fetch("/api/overrides", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: editPass, type: "ads", value: obj }) });
+    if (res.ok) { setServer((s) => ({ ...s, ads: obj })); return true; }
+    const j = await res.json().catch(() => ({})); alert("No se pudo guardar: " + (j.error || res.status)); return false;
+  }, [editPass]);
+
+  const saveGa4 = useCallback(async (obj) => {
+    const res = await fetch("/api/overrides", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: editPass, type: "ga4", value: obj }) });
+    if (res.ok) { setServer((s) => ({ ...s, ga4: obj })); return true; }
+    const j = await res.json().catch(() => ({})); alert("No se pudo guardar: " + (j.error || res.status)); return false;
+  }, [editPass]);
+
   // El PDF debe salir completo aunque estés parada en una pestaña: se montan todas,
   // se le da tiempo a los gráficos a dibujarse y recién ahí se abre el diálogo de impresión.
   const exportPdf = useCallback(() => {
@@ -738,14 +868,29 @@ export default function Page() {
 
   // --- Instagram ---
   const ig = useMemo(() => {
-    const m = data?.instagram;
-    if (!m) return null;
-    const monthly = m.monthly || [];
-    const fMap = followersByMonth(monthly, m.followers ?? null, "newFollowers");
-    const cur = monthly.find((x) => x.key === sel) || null;
-    const prev = monthly.find((x) => x.key === prevKey) || null;
-    return { followers: fMap[sel] ?? m.followers, fPrev: fMap[prevKey] ?? null, username: m.username, cur, prev, best: m.bestByMonth?.[sel] || [], series: monthly };
-  }, [data, sel, prevKey]);
+    const api = data?.instagram;
+    const man = server.instagram || data?.manual?.instagram;
+    if (!api && !man) return null;
+    const apiMonthlyArr = api?.monthly || [];
+    const apiMonthly = {};
+    for (const x of apiMonthlyArr) apiMonthly[x.key] = x;
+    const monthlyOf = (k) => {
+      const a = apiMonthly[k] || null;
+      const mo = man?.monthly?.[k] || null;
+      if (a && mo) { const out = { ...a }; for (const kk of Object.keys(mo)) if (mo[kk] != null && mo[kk] !== "") out[kk] = mo[kk]; return out; }
+      return mo || a || null;
+    };
+    const fMap = followersByMonth(apiMonthlyArr, api?.followers ?? null, "newFollowers");
+    const manFollowers = man?.followers || {};
+    const cur = monthlyOf(sel);
+    const prev = monthlyOf(prevKey);
+    const followers = manFollowers[sel] ?? fMap[sel] ?? api?.followers ?? null;
+    const fPrev = manFollowers[prevKey] ?? fMap[prevKey] ?? null;
+    const best = (man?.best?.[sel]?.length ? man.best[sel] : api?.bestByMonth?.[sel]) || [];
+    const series = (data?.months || []).map((k) => ({ key: k, ...(monthlyOf(k) || {}) }));
+    const manual = !!(server.instagram || data?.manual?.instagram);
+    return { followers, fPrev, username: api?.username, cur, prev, best, series, hasMonth: !!cur, connected: !!api && !manual };
+  }, [data, server.instagram, sel, prevKey]);
 
   // --- Facebook ---
   const fb = useMemo(() => {
@@ -761,11 +906,21 @@ export default function Page() {
   // --- Meta Ads ---
   const ads = useMemo(() => {
     const m = data?.ads;
-    if (!m) return null;
-    const cur = m.monthly?.find((x) => x.key === sel) || null;
-    const prev = m.monthly?.find((x) => x.key === prevKey) || null;
-    return { currency: m.currency, cur, prev, series: m.monthly || [] };
-  }, [data, sel, prevKey]);
+    const man = server.ads || data?.manual?.ads;
+    if (!m && !man) return null;
+    const manM = man?.monthly || {};
+    const mergeK = (base, k) => {
+      const o = manM[k];
+      if (!base && !o) return null;
+      const out = { ...(base || {}) };
+      if (o) for (const kk of Object.keys(o)) if (o[kk] != null && o[kk] !== "") out[kk] = o[kk];
+      return out;
+    };
+    const cur = mergeK(m?.monthly?.find((x) => x.key === sel) || null, sel);
+    const prev = mergeK(m?.monthly?.find((x) => x.key === prevKey) || null, prevKey);
+    const manual = !!(server.ads || data?.manual?.ads);
+    return { currency: m?.currency || "CLP", cur, prev, series: m?.monthly || [], connected: !!m && !manual };
+  }, [data, server.ads, sel, prevKey]);
 
   // --- Google Ads ---
   const gads = useMemo(() => {
@@ -786,11 +941,21 @@ export default function Page() {
   // --- GA4 ---
   const ga4 = useMemo(() => {
     const m = data?.ga4;
-    if (!m) return null;
-    const cur = m.monthly?.find((x) => x.key === sel) || null;
-    const prev = m.monthly?.find((x) => x.key === prevKey) || null;
-    return { cur, prev, series: m.monthly || [], channels: m.channelsByMonth?.[sel] || [], pages: m.pagesByMonth?.[sel] || [] };
-  }, [data, sel, prevKey]);
+    const man = server.ga4 || data?.manual?.ga4;
+    if (!m && !man) return null;
+    const manM = man?.monthly || {};
+    const mergeK = (base, k) => {
+      const o = manM[k];
+      if (!base && !o) return null;
+      const out = { ...(base || {}) };
+      if (o) for (const kk of Object.keys(o)) if (o[kk] != null && o[kk] !== "") out[kk] = o[kk];
+      return out;
+    };
+    const cur = mergeK(m?.monthly?.find((x) => x.key === sel) || null, sel);
+    const prev = mergeK(m?.monthly?.find((x) => x.key === prevKey) || null, prevKey);
+    const manual = !!(server.ga4 || data?.manual?.ga4);
+    return { cur, prev, series: m?.monthly || [], channels: m?.channelsByMonth?.[sel] || [], pages: m?.pagesByMonth?.[sel] || [], connected: !!m && !manual };
+  }, [data, server.ga4, sel, prevKey]);
 
   // --- LinkedIn (API en vivo, o manual editado por el CM con prioridad, o ejemplo sembrado) ---
   const li = useMemo(() => {
@@ -1017,8 +1182,11 @@ Actualizar a inicio de mes: <b>Competencia</b> (ER% de cada cuenta) en modo edic
 
       {showTab("contenidos") && (<>
       {/* INSTAGRAM */}
-      <Section title="📸 Instagram (orgánico)" subtitle={ig?.username ? `@${ig.username}` : undefined}>
+      <Section title={<span>📸 Instagram (orgánico) {ig && <span style={ig.connected ? autoBadge : chromeBadge}>{ig.connected ? "AUTO · API" : "MANUAL"}{editMode ? " · EDITABLE" : ""}</span>}</span>} subtitle={ig?.username ? `@${ig.username}` : undefined}>
         {data?.errors?.instagram && <div style={{ color: "#b45309", fontSize: 13, marginBottom: 10 }}>Instagram: {data.errors.instagram}</div>}
+        {editMode && (
+          <InstagramEditor source={server.instagram || data?.manual?.instagram} monthKey={sel} seed={{ followers: ig?.followers, cur: ig?.cur, best: ig?.best }} onSave={saveInstagram} />
+        )}
         {ig?.cur ? (
           <>
             <div style={grid(150)}>
@@ -1190,8 +1358,13 @@ Actualizar a inicio de mes: <b>Competencia</b> (ER% de cada cuenta) en modo edic
 
       {showTab("paid") && (<>
       {/* META ADS (PAID) */}
-      <Section title="🎯 Meta Ads (paid)" subtitle="Inversión por objetivo: Tráfico (visitas a la web), Formularios (leads) y Mensajes (conversaciones)">
+      <Section title={<span>🎯 Meta Ads (paid) {ads && <span style={ads.connected ? autoBadge : chromeBadge}>{ads.connected ? "AUTO · API" : "MANUAL"}{editMode ? " · EDITABLE" : ""}</span>}</span>} subtitle="Inversión por objetivo: Tráfico (visitas a la web), Formularios (leads) y Mensajes (conversaciones)">
         {data?.errors?.ads && <div style={{ color: "#b45309", fontSize: 13, marginBottom: 10 }}>Meta Ads: {data.errors.ads}</div>}
+        {editMode && (
+          <KpiEditor title="Editar Meta Ads" note="(precargado de la API; corrige solo los KPIs que necesites — las tablas siguen automáticas)" label="Meta Ads"
+            fields={[{ key: "spend", label: "Inversión total" }, { key: "landingViews", label: "Visitas a la web (LP)" }, { key: "leads", label: "Leads (formularios)" }, { key: "costPerLead", label: "Costo / lead" }, { key: "conversations", label: "Conversaciones" }, { key: "reach", label: "Alcance" }]}
+            source={server.ads || data?.manual?.ads} monthKey={sel} seed={ads?.cur} onSave={saveAds} />
+        )}
         {ads?.cur ? (
           <>
             <div style={grid(150)}>
@@ -1279,8 +1452,13 @@ Actualizar a inicio de mes: <b>Competencia</b> (ER% de cada cuenta) en modo edic
 
       {showTab("web") && (<>
       {/* GA4 */}
-      <Section title="📊 Google Analytics (GA4)" subtitle="Rendimiento del sitio y fuentes de tráfico">
+      <Section title={<span>📊 Google Analytics (GA4) {ga4 && <span style={ga4.connected ? autoBadge : chromeBadge}>{ga4.connected ? "AUTO · API" : "MANUAL"}{editMode ? " · EDITABLE" : ""}</span>}</span>} subtitle="Rendimiento del sitio y fuentes de tráfico">
         {data?.errors?.ga4 && <div style={{ color: "#b45309", fontSize: 13, marginBottom: 10 }}>GA4: {data.errors.ga4}</div>}
+        {editMode && (
+          <KpiEditor title="Editar GA4" note="(precargado de la API; corrige solo lo que necesites)" label="GA4"
+            fields={[{ key: "activeUsers", label: "Usuarios activos" }, { key: "sessions", label: "Sesiones" }, { key: "views", label: "Vistas" }, { key: "keyEvents", label: "Eventos clave" }, { key: "events", label: "Eventos totales" }, { key: "avgEngagementSec", label: "Duración media (seg)" }]}
+            source={server.ga4 || data?.manual?.ga4} monthKey={sel} seed={ga4?.cur} onSave={saveGa4} />
+        )}
         {ga4?.cur ? (
           <>
             <div style={grid(150)}>
