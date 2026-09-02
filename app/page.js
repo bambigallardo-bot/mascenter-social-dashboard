@@ -1358,20 +1358,20 @@ Actualizar a inicio de mes: <b>Competencia</b> (ER% de cada cuenta) en modo edic
 
       {showTab("paid") && (<>
       {/* META ADS (PAID) */}
-      <Section title={<span>🎯 Meta Ads (paid) {ads && <span style={ads.connected ? autoBadge : chromeBadge}>{ads.connected ? "AUTO · API" : "MANUAL"}{editMode ? " · EDITABLE" : ""}</span>}</span>} subtitle="Inversión por objetivo: Tráfico (visitas a la web), Formularios (leads) y Mensajes (conversaciones)">
+      <Section title={<span>🎯 Meta Ads (paid) {ads && <span style={ads.connected ? autoBadge : chromeBadge}>{ads.connected ? "AUTO · API" : "MANUAL"}{editMode ? " · EDITABLE" : ""}</span>}</span>} subtitle="Campañas de tráfico al perfil de Instagram y de Mensajes (conversaciones)">
         {data?.errors?.ads && <div style={{ color: "#b45309", fontSize: 13, marginBottom: 10 }}>Meta Ads: {data.errors.ads}</div>}
         {editMode && (
           <KpiEditor title="Editar Meta Ads" note="(precargado de la API; corrige solo los KPIs que necesites — las tablas siguen automáticas)" label="Meta Ads"
-            fields={[{ key: "spend", label: "Inversión total" }, { key: "landingViews", label: "Visitas a la web (LP)" }, { key: "leads", label: "Leads (formularios)" }, { key: "costPerLead", label: "Costo / lead" }, { key: "conversations", label: "Conversaciones" }, { key: "reach", label: "Alcance" }]}
+            fields={[{ key: "spend", label: "Inversión total" }, { key: "profileVisits", label: "Visitas al perfil de IG" }, { key: "newFollowers", label: "Seguidores nuevos" }, { key: "conversations", label: "Conversaciones" }, { key: "reach", label: "Alcance" }]}
             source={server.ads || data?.manual?.ads} monthKey={sel} seed={ads?.cur} onSave={saveAds} />
         )}
         {ads?.cur ? (
           <>
             <div style={grid(150)}>
               <Card label="Inversión total" value={fmtMoney(ads.cur.spend)} accent="#d97706" change={delta(ads.cur.spend, ads.prev?.spend)} />
-              <Card label="Visitas a la web (LP)" value={fmt(ads.cur.landingViews)} accent="#2563eb" change={delta(ads.cur.landingViews, ads.prev?.landingViews)} />
-              <Card label="Leads (formularios)" value={fmt(ads.cur.leads)} accent="#16a34a" change={delta(ads.cur.leads, ads.prev?.leads)} />
-              <Card label="Costo / lead" value={fmtMoney(ads.cur.costPerLead)} change={delta(ads.cur.costPerLead, ads.prev?.costPerLead)} />
+              <Card label="Visitas al perfil de IG" value={fmt(ads.cur.profileVisits)} accent="#2563eb" change={delta(ads.cur.profileVisits, ads.prev?.profileVisits)} />
+              <Card label="Costo por visita" value={fmtMoney(ads.cur.profileVisits ? Math.round(ads.cur.spend / ads.cur.profileVisits) : null)} change={delta(ads.cur.profileVisits ? Math.round(ads.cur.spend / ads.cur.profileVisits) : null, ads.prev?.profileVisits ? Math.round(ads.prev.spend / ads.prev.profileVisits) : null)} />
+              <Card label="Seguidores nuevos" value={fmt(ads.cur.newFollowers)} accent="#16a34a" change={delta(ads.cur.newFollowers, ads.prev?.newFollowers)} />
               <Card label="Conversaciones" value={fmt(ads.cur.conversations)} change={delta(ads.cur.conversations, ads.prev?.conversations)} />
               <Card label="Alcance" value={fmt(ads.cur.reach)} accent="#7c3aed" change={delta(ads.cur.reach, ads.prev?.reach)} />
             </div>
