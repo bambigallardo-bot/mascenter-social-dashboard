@@ -1072,7 +1072,11 @@ export default function Page() {
   // Series para gráficos de evolución (todos los meses, ascendente).
   const igSeries = (ig?.series || []).map((x) => ({ name: monthLabel(x.key).split(" ")[0], Alcance: x.reach, Interacciones: x.interactions }));
   const fbSeries = (fb?.series || []).map((x) => ({ name: monthLabel(x.key).split(" ")[0], Visualizaciones: x.impressions, Interacciones: x.engagement }));
-  const adsSeries = (ads?.series || []).map((x) => ({ name: monthLabel(x.key).split(" ")[0], "Visitas LP": x.landingViews || 0, Leads: x.leads || 0, Inversión: x.spend || 0 }));
+  const adsSeries = (ads?.series || []).map((x) => {
+    const ov = (server.ads || data?.manual?.ads)?.monthly?.[x.key] || {};
+    const pick = (k) => (ov[k] != null && ov[k] !== "" ? ov[k] : x[k]);
+    return { name: monthLabel(x.key).split(" ")[0], "Visitas al perfil": pick("profileVisits") || 0, Conversaciones: pick("conversations") || 0, Inversión: pick("spend") || 0 };
+  });
   const emailSeries = (emailAgg?.series || []).map((x) => ({ name: monthLabel(x.key).split(" ")[0], "Open Rate": x.openRate, CTOR: x.ctor }));
   const gadsSeries = (gads?.series || []).map((x) => ({ name: monthLabel(x.key).split(" ")[0], Conversiones: x.conversions, "Costo/conv.": x.costPerConv }));
   const ga4Series = (ga4?.series || []).map((x) => ({ name: monthLabel(x.key).split(" ")[0], Usuarios: x.activeUsers, "Eventos clave": x.keyEvents }));
@@ -1424,18 +1428,18 @@ Actualizar a inicio de mes: <b>Competencia</b> (ER% de cada cuenta) en modo edic
 
             {adsSeries.length > 1 && (
               <div style={{ ...grid(320), marginTop: 16 }}>
-                <ChartBox title="Visitas a la web (LP) por mes">
+                <ChartBox title="Visitas al perfil de IG por mes">
                   <BarChart data={adsSeries}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e4e7ec" />
                     <XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip {...tip} />
-                    <Bar dataKey="Visitas LP" fill="#E52522" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Visitas al perfil" fill="#E52522" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ChartBox>
-                <ChartBox title="Leads por mes">
+                <ChartBox title="Conversaciones por mes">
                   <BarChart data={adsSeries}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e4e7ec" />
                     <XAxis dataKey="name" {...axis} /><YAxis {...axis} /><Tooltip {...tip} />
-                    <Bar dataKey="Leads" fill="#334155" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Conversaciones" fill="#334155" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ChartBox>
               </div>
