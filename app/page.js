@@ -116,7 +116,7 @@ const toneColor = { good: "#16a34a", warn: "#d97706", bad: "#dc2626", info: "#25
 const miniBtn = { background: "#f4f5f7", color: "#374151", border: "1px solid #e4e7ec", borderRadius: 8, padding: "5px 10px", cursor: "pointer", fontSize: 12 };
 
 // Conclusión auto-redactada, editable en modo edición. Override desde servidor (KV) o localStorage.
-function Conclusion({ id, text }) {
+function Conclusion({ id, text, allowEmpty }) {
   const ctx = useContext(EditCtx);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -129,7 +129,9 @@ function Conclusion({ id, text }) {
     try { setLocalOv(localStorage.getItem(`concl:${id}`)); } catch (_) {}
   }, [id, usingServer]);
   const override = usingServer ? ctx.getOverride(id) : localOv;
-  if (!text && !override) return null;
+  // allowEmpty: en modo edición muestra la caja aunque no haya texto automático (p. ej. competencia,
+  // donde el análisis lo escribe el CM a mano). El cliente no ve nada hasta que se guarde.
+  if (!text && !override && !(allowEmpty && ctx.canEdit)) return null;
   const shown = (override ?? text) || "";
   const doSave = async () => {
     setSaving(true);
@@ -1373,7 +1375,7 @@ Actualizar a inicio de mes: <b>Competencia</b> (ER% de cada cuenta) en modo edic
                 </tbody>
               </table>
             </div>
-            <Conclusion id={`comp-${sel}`} text={competenciaConclusion(comp.rows)} />
+            <Conclusion id={`comp-${sel}`} text={competenciaConclusion(comp.rows)} allowEmpty />
             <div style={{ color: "#9aa3af", fontSize: 12, marginTop: 14, fontStyle: "italic" }}>
               Fórmula ER: (Likes + Comentarios) / Seguidores × 100 · rango esperado 1–5%. Al no contar con las cifras exactas de seguidores e interacciones de la competencia, sus resultados son aproximados.
             </div>
